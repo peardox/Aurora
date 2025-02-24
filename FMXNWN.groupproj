@@ -1,0 +1,36 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{36BFA26A-2380-4DCE-8C60-05F6A1654F65}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="src\NWN.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="NWN">
+        <MSBuild Projects="src\NWN.dproj"/>
+    </Target>
+    <Target Name="NWN:Clean">
+        <MSBuild Projects="src\NWN.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="NWN:Make">
+        <MSBuild Projects="src\NWN.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="NWN"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="NWN:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="NWN:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>
