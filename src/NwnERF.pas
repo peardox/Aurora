@@ -65,10 +65,12 @@ type
     FHeadSize: UInt32;
   private
     procedure DecodeStream(FStream: TStream);
+    function OpenFile: TStream;
   public
     constructor Create;
     destructor Destroy; override;
     function Open: Boolean;
+    function Grab(const OutFile: String; const Index: UInt32): Boolean;
     property Filename: String read FFilename write FFilename;
     property Header: TERFHeader read FHeader write FHeader;
     property LocStrings: TLocStringList read FLocStrings write FLocStrings;
@@ -149,6 +151,7 @@ begin
                 FResKeys.Add(AResKey);
               end;
 
+            FStream.Position := FHeader.OffsetToResourceList;
             for I := 0 to FHeader.EntryCount - 1 do
               begin
                 AResOffset := TResOffset.Create;
@@ -173,11 +176,48 @@ end;
 
 function TERF.Open: Boolean;
 var
-  FS: Int64;
   FStream: TStream;
 begin
   Result := False;
-  FStream := Nil;
+  FStream := OpenFile;
+
+  if FStream <> Nil then
+    begin
+      DecodeStream(FStream);
+      FreeAndNil(FStream);
+      Result := True;
+    end;
+end;
+
+function TERF.Grab(const OutFile: String; const Index: UInt32): Boolean;
+var
+  FStream: TStream;
+  FOut: TFileStream;
+  Buf: TBytes;
+begin
+  Result := False;
+  FStream := OpenFile;
+
+  if FStream <> Nil then
+    begin
+      FOut := TFileStream.Create(OutFile, fmCreate);
+      FStream.Position := ResOffsets[Index].OffsetToResource;
+      SetLength(Buf, ResOffsets[Index].ResourceSize);
+      FStream.Read(Buf, ResOffsets[Index].ResourceSize);
+      FOut.Position := 0;
+      FOut.Write(Buf, ResOffsets[Index].ResourceSize);
+
+      FreeAndNil(FOut);
+      FreeAndNil(FStream);
+      Result := True;
+    end;
+end;
+
+function TERF.OpenFile: TStream;
+var
+  FS: Int64;
+begin
+  Result := Nil;
 
   if not(FFilename.IsEmpty) and FileExists(FFilename) then
     begin
@@ -187,18 +227,12 @@ begin
           try
             if FS < BIG_FILE then
               begin
-                FStream := TMemoryStream.Create as TStream;
-                TMemoryStream(FStream).LoadFromFile(FFilename);
+                Result := TMemoryStream.Create as TStream;
+                TMemoryStream(Result).LoadFromFile(FFilename);
               end
             else
-              FStream := TFileStream.Create(FFilename, fmOpenRead) as TStream;
+              Result := TFileStream.Create(FFilename, fmOpenRead) as TStream;
           finally
-            if Assigned(FStream) then
-              begin
-                DecodeStream(FStream);
-                FreeAndNil(FStream);
-                Result := True;
-              end;
           end;
         end;
     end;

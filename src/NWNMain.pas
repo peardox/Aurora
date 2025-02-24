@@ -31,6 +31,7 @@ const
   TestERF02: String = 'D:\\SteamLibrary\\steamapps\\common\\Neverwinter Nights\\data\\nwm\\Neverwinter Nights - Doom of Icewind Dale.nwm';
   TestERF03: String = 'D:\\SteamLibrary\\steamapps\\common\\Neverwinter Nights\\data\\nwm\\Chapter1.nwm';
   TestERF04: String = 'C:\Users\simon\Documents\Neverwinter Nights\saves\000003 - Community\\AHTD - Character Generator.sav';
+
 implementation
 
 {$R *.fmx}
@@ -47,7 +48,7 @@ var
 begin
   ERF := TERF.Create;
   try
-    ERF.Filename := TestERF04;
+    ERF.Filename := TestERF02;
     if ERF.Open then
       begin
         Memo1.Lines.Add(Format('SizeOf ERF = %X (%d)',[ERF.Size,ERF.Size]));
@@ -79,12 +80,19 @@ begin
           begin
             Memo1.Lines.Add('');
             Memo1.Lines.Add(Format('Keys (%d)', [ERF.Header.EntryCount]));
+            if not DirectoryExists('export') then
+              CreateDir('export');
+
             for I := 0 to ERF.ResKeys.Count -1 do
               if ResRef.IsValid(ERF.ResKeys[I].ResType) then
-                Memo1.Lines.Add(Format('[%d] : %s.%s', [I, ERF.ResKeys[I].ResRef, ResRef.Ext[ERF.ResKeys[I].ResType]]))
+                begin
+                  Memo1.Lines.Add(Format('[%d] : %s.%s = %d - %d', [I, ERF.ResKeys[I].ResRef, ResRef.Ext[ERF.ResKeys[I].ResType], ERF.ResOffsets[I].OffsetToResource, ERF.ResOffsets[I].ResourceSize]));
+                  ERF.Grab('export\\'+ ERF.ResKeys[I].ResRef + '.' + ResRef.Ext[ERF.ResKeys[I].ResType], I);
+                end
               else
                 begin
                   Memo1.Lines.Add(Format('[%d] : %s.%s = %d - %d', [I, ERF.ResKeys[I].ResRef, ResRef.Ext[ERF.ResKeys[I].ResType], ERF.ResOffsets[I].OffsetToResource, ERF.ResOffsets[I].ResourceSize]));
+                  ERF.Grab('export\\' + ERF.ResKeys[I].ResRef + '.' + IntToStr(ERF.ResKeys[I].ResType), I);
                 end;
           end;
       end;
